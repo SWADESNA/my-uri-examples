@@ -1,0 +1,50 @@
+
+As a workaround, you can use workflow with two Job Templates.
+
+I've tested following and it is working fine for me. First job template will set_stat for the tower_job_id and other template will get you the output json for the past job run. If you want you can use `mail` or `slack` module in second playbook to send the data to other application and this time it will get the correct output of host_status_count.
+
+First Playbook : 
+
+```
+---
+- hosts: localhost
+  tasks:
+    - name: "Artifact URL of test results to Tower Workflows"
+      set_stats:
+        data:
+          my_tower_job_id:  "{{ tower_job_id }}"
+```
+
+Second playbook :
+```
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    tower_api_url: "https://<IP of your TOWER>"
+    tower_token: "wEuCjxA3TQ63iwFtxqQ8tshMkxGssFEb"
+  tasks:
+    - name: Check that tower job has finished
+      uri:
+        url: "{{ tower_api_url }}/api/v2/jobs/{{ my_tower_job_id }}/"
+        method: GET
+        validate_certs: no
+        status_code: 201, 200
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer {{ tower_token }}"
+      register: job_result
+      ignore_errors: true
+
+    - name: show job details for {{ job_id }}
+      debug:
+        msg: "Host_status_count {{ job_result.json.host_status_counts }}"
+```
+
+With above you would be able to get the correct host_status_count for the Job. Please replace `tower_api_url` and `token` according to your configuration.
+ 
+> https://docs.ansible.com/ansible/latest/collections/community/general/mail_module.html  --For mail community module
+
+> https://docs.ansible.com/ansible/latest/collections/community/general/slack_module.html --For slack community module
+
