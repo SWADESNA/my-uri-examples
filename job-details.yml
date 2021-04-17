@@ -1,0 +1,30 @@
+---
+- name: Playbook for URI
+  hosts: all
+  tasks:
+    - name: Test ./ap1/v2/ url
+      uri:
+        url: https://ec2-13-232-150-200.ap-south-1.compute.amazonaws.com/api/v2/
+        url_username: admin
+        url_password: Mishtii
+        validate_certs: no
+        
+    - name: Test ./api/v2/jobs/ url
+      vars:
+        tower_token: "Cvw8Ikxn7Oks2GxspGBrlCgSRH40UY"
+      uri:
+        url: https://ec2-13-232-150-200.ap-south-1.compute.amazonaws.com/api/v2/jobs/262/
+        url_username: admin
+        url_password: Mishtii
+        validate_certs: no
+        method: GET
+        headers: 
+          Content-Type: "application/json"
+          Authorization: "Bearer {{ tower_token }}"
+      register: job_result
+        
+    - name: show job details for {{ job_id }}
+      debug:
+        msg: "Job events are {{ job_result }}" 
+        msg: "Job events are {{ job_result.json.extra_vars }}"
+          
